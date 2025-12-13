@@ -41,7 +41,7 @@ class AuthManager {
         // 模拟登录验证（实际应用中这里会调用API）
         return if (username.isNotBlank() && password.isNotBlank()) {
             // 登录成功，获取用户信息
-            val user = MockRepository.getCurrentUser() ?: User.empty()
+            val user = MockRepository.getCurrentUser() ?: MockRepository.getEmptyUser()
             _currentUser.value = user
             Result.success(user)
         } else {
@@ -53,7 +53,7 @@ class AuthManager {
      * 使用用户ID直接登录（用于演示）
      */
     fun loginWithUserId(userId: String): Boolean {
-        val user = MockRepository.getUserById(userId)
+        val user = MockRepository.getUser(userId)
         if (user != null) {
             _currentUser.value = user
             return true
@@ -67,27 +67,22 @@ class AuthManager {
     suspend fun register(
         username: String,
         displayName: String,
-        password: String,
-        bio: String = ""
+        password: String
     ): Result<User> {
         // 模拟网络请求延迟
         kotlinx.coroutines.delay(1500)
 
-        // 模拟注册逻辑（实际应用中这里会调用API）
-        return if (username.isNotBlank() && password.isNotBlank()) {
-            val newUser = User(
-                id = "user_${System.currentTimeMillis()}",
-                username = username,
-                displayName = displayName,
-                avatarUrl = "https://randomuser.me/api/portraits/lego/${(1..10).random()}.jpg",
-                bio = bio
-            )
+        // 使用MockRepository的注册功能
+        val result = MockRepository.register(username, displayName, password)
 
-            _currentUser.value = newUser
-            Result.success(newUser)
-        } else {
-            Result.failure(Exception("注册信息不完整"))
+        if (result.isSuccess) {
+            // 注意：这里需要明确指定类型，从Result中获取User
+            result.getOrNull()?.let { user ->
+                _currentUser.value = user
+            }
         }
+
+        return result
     }
 
     /**

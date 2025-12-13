@@ -56,7 +56,8 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.1")
     // Navigation Compose - 导航库（核心）
     implementation("androidx.navigation:navigation-compose:2.7.6")
-
+    // Coil - 图片加载库
+    implementation("io.coil-kt:coil-compose:2.5.0")
     // ViewModel Compose - 状态管理
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
