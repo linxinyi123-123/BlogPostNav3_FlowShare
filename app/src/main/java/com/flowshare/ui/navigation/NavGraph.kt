@@ -14,6 +14,7 @@ import com.flowshare.ui.screen.auth.LoginScreen
 import com.flowshare.ui.screen.auth.RegisterScreen
 import com.flowshare.ui.screen.auth.WelcomeScreen
 import com.flowshare.ui.screen.main.MainContainer
+import com.flowshare.ui.screen.post.PostDetailScreen
 import com.flowshare.ui.screen.profile.ProfileScreen
 
 /**
@@ -161,12 +162,11 @@ fun FlowShareNavHost(
                 )
             }
         ) { backStackEntry ->
-            // 我们将在Day 5实现这个页面
             val postId = backStackEntry.arguments?.getString("postId") ?: ""
-            // 暂时用一个占位页面
-            ProfileScreen(
-                navController = navController,
-                userId = "current_user"
+            // ✅ Day 5：使用真正的动态详情页
+            PostDetailScreen(
+                postId = postId,
+                navController = navController
             )
         }
 
