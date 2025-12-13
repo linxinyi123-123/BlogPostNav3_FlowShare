@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChatBubbleOutline
@@ -113,7 +114,13 @@ fun PostDetailScreen(
                     ) {
                         // 作者信息
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {  // ← 添加这行
+                                    author?.let {
+                                        navController.navigate(Screen.UserProfile.createRoute(it.id))
+                                    }
+                                },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // 用户头像
