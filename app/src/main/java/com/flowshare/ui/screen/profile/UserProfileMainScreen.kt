@@ -27,17 +27,29 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import com.flowshare.ui.navigation.Screen
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.flowshare.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserProfileMainScreen(
     navController: NavController, // 嵌套导航控制器
     userId: String,
-    mainNavController: NavController? = null // 主导航控制器（可选）
+    mainNavController: NavController? = null, // 主导航控制器（可选）
+    authViewModel: AuthViewModel? = null // 新增：AuthViewModel
 ) {
     // 获取用户信息
     val user = MockRepository.getUser(userId) ?: User.empty()
     val isCurrentUser = userId == "current_user"
+
+    // 菜单状态
+    var showMenu by remember { mutableStateOf(false) }
 
     // 获取用户的所有帖子
     val userPosts = MockRepository.getPostsByUserId(userId)
@@ -64,15 +76,40 @@ fun UserProfileMainScreen(
                 },
                 actions = {
                     if (isCurrentUser) {
-                        IconButton(onClick = {
-                            // 导航到设置页面（主导航栈）
-                            // 注意：这里需要访问主导航控制器，我们需要传递主navController
-                            // 暂时使用占位，Day 9会实现
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "设置"
-                            )
+                        // 添加菜单按钮
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "更多选项"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("设置") },
+                                    onClick = {
+                                        showMenu = false
+                                        // 导航到设置页面
+                                        mainNavController?.navigate(Screen.Settings.route)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("退出登录") },
+                                    onClick = {
+                                        showMenu = false
+                                        // 调用退出登录
+                                        authViewModel?.logout()
+                                        // 导航到欢迎页面
+                                        mainNavController?.navigate(Screen.Welcome.route) {
+                                            // 清除所有返回栈
+                                            popUpTo(0) { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 },

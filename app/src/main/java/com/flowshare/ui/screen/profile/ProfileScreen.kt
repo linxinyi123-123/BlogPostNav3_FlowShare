@@ -1,5 +1,4 @@
-// 文件路径: app/src/main/java/com/flowshare/ui/screen/profile/ProfileScreen.kt
-
+// 修改 ProfileScreen.kt
 package com.flowshare.ui.screen.profile
 
 import androidx.compose.runtime.Composable
@@ -7,11 +6,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.flowshare.viewmodel.AuthViewModel  // 添加导入
 
 @Composable
 fun ProfileScreen(
     navController: NavController, // 主导航控制器
-    userId: String
+    userId: String,
+    authViewModel: AuthViewModel? = null  // 新增：可选参数
 ) {
     // 为嵌套导航创建一个独立的 NavController
     val nestedNavController = rememberNavController()
@@ -25,9 +26,10 @@ fun ProfileScreen(
         // 主页面
         composable("main") {
             UserProfileMainScreen(
-                navController = nestedNavController, // 传递嵌套导航控制器
+                navController = nestedNavController,
                 userId = userId,
-                mainNavController = navController // 传递主导航控制器
+                mainNavController = navController,
+                authViewModel = authViewModel  // 传递 AuthViewModel
             )
         }
 
@@ -36,7 +38,7 @@ fun ProfileScreen(
             UserFollowersScreen(
                 navController = nestedNavController,
                 userId = userId,
-                mainNavController = navController // 传递主导航控制器
+                mainNavController = navController
             )
         }
 
@@ -45,7 +47,7 @@ fun ProfileScreen(
             UserFollowingScreen(
                 navController = nestedNavController,
                 userId = userId,
-                mainNavController = navController // 传递主导航控制器
+                mainNavController = navController
             )
         }
     }

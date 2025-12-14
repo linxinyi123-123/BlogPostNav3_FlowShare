@@ -143,7 +143,8 @@ fun MainContainer(
             composable(route = Screen.Profile.route) {
                 com.flowshare.ui.screen.profile.ProfileScreen(
                     navController = navController,
-                    userId = "current_user"
+                    userId = "current_user",
+                    authViewModel = authViewModel  // 传递 AuthViewModel
                 )
             }
         }

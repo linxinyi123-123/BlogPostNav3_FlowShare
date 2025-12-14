@@ -26,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import com.flowshare.ui.screen.settings.SettingsScreen
 
 /**
  * 应用的主导航图
@@ -288,10 +289,9 @@ fun FlowShareNavHost(
                 )
             }
         ) {
-            // 我们将在后续实现设置页面
-            ProfileScreen(
+            SettingsScreen(
                 navController = navController,
-                userId = "current_user"
+                authViewModel = authViewModel  // 传递 AuthViewModel
             )
         }
 
