@@ -4,12 +4,17 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.flowshare.viewmodel.AuthViewModel
 import com.flowshare.ui.screen.auth.LoginScreen
 import com.flowshare.ui.screen.auth.RegisterScreen
 import com.flowshare.ui.screen.auth.WelcomeScreen
@@ -17,6 +22,10 @@ import com.flowshare.ui.screen.main.MainContainer
 import com.flowshare.ui.screen.post.PostDetailScreen
 import com.flowshare.ui.screen.profile.ProfileScreen
 import com.flowshare.ui.screen.createpost.CreatePostScreen
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 
 /**
  * 应用的主导航图
@@ -25,9 +34,28 @@ import com.flowshare.ui.screen.createpost.CreatePostScreen
 @Composable
 fun FlowShareNavHost(
     navController: NavHostController,
+    authViewModel: AuthViewModel, // 新增参数
     modifier: Modifier = Modifier,
     startDestination: String = Screen.Welcome.route
 ) {
+    // 监听登录状态变化
+    val isLoggedIn = authViewModel.isLoggedIn.collectAsState().value
+
+    // 根据登录状态动态决定起始页面
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn && navController.currentDestination?.route != Screen.Main.route) {
+            // 如果已登录且不在主页面，导航到主页面
+            navController.navigate(Screen.Main.route) {
+                popUpTo(Screen.Welcome.route) { inclusive = true }
+            }
+        } else if (!isLoggedIn && navController.currentDestination?.route != Screen.Welcome.route) {
+            // 如果未登录且不在欢迎页，导航到欢迎页
+            navController.navigate(Screen.Welcome.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -45,11 +73,9 @@ fun FlowShareNavHost(
         ) {
             WelcomeScreen(
                 onLoginClick = {
-                    // 修复1：从欢迎页到登录页，不要popUpTo欢迎页
                     navController.navigate(Screen.Login.route)
                 },
                 onRegisterClick = {
-                    // 修复2：从欢迎页到注册页，不要popUpTo欢迎页
                     navController.navigate(Screen.Register.route)
                 }
             )
@@ -74,20 +100,18 @@ fun FlowShareNavHost(
             }
         ) {
             LoginScreen(
+                authViewModel = authViewModel, // 传递 ViewModel
                 onLoginSuccess = {
-                    // 修复3：登录成功后跳转到主页面，并清除整个认证栈
+                    // 登录成功后导航到主页面
                     navController.navigate(Screen.Main.route) {
-                        // 清除从欢迎页到当前页的所有页面
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onRegisterClick = {
-                    // 修复4：从登录页到注册页，正常跳转
                     navController.navigate(Screen.Register.route)
                 },
                 onBackClick = {
-                    // 修复5：返回时pop到欢迎页
-                    navController.popBackStack(Screen.Welcome.route, false)
+                    navController.popBackStack()
                 }
             )
         }
@@ -111,20 +135,18 @@ fun FlowShareNavHost(
             }
         ) {
             RegisterScreen(
+                authViewModel = authViewModel, // 传递 ViewModel
                 onRegisterSuccess = {
-                    // 修复6：注册成功后跳转到主页面，并清除整个认证栈
+                    // 注册成功后导航到主页面
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Welcome.route) { inclusive = true }
                     }
                 },
                 onLoginClick = {
-                    // 修复7：从注册页点击"立即登录"，应该返回到登录页
                     navController.navigate(Screen.Login.route)
                 },
                 onBackClick = {
-                    // 修复8：返回时pop到欢迎页
-                    navController.popBackStack(Screen.Welcome.route, false)
-
+                    navController.popBackStack()
                 }
             )
         }
@@ -139,10 +161,14 @@ fun FlowShareNavHost(
                 fadeOut(animationSpec = tween(300))
             }
         ) {
-            MainContainer(navController = navController)
+            MainContainer(
+                navController = navController,
+                authViewModel = authViewModel // 传递 ViewModel
+            )
         }
 
         // ================== 发布页面 ==================
+// 修改 CreatePost 路由部分
         composable(
             route = Screen.CreatePost.route,
             enterTransition = {
@@ -157,16 +183,38 @@ fun FlowShareNavHost(
                     animationSpec = tween(300)
                 )
             }
-        ) {
-            CreatePostScreen(
-                navController = navController,
-                onPostCreated = {
-                    // 发布成功后返回到 Feed 页
-                    navController.navigate(Screen.Main.route) {
-                        popUpTo(Screen.Main.route) { inclusive = false }
+        ) { backStackEntry ->
+            // 收集登录状态
+            val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+
+            // 检查登录状态，未登录则跳转到登录页
+            LaunchedEffect(isLoggedIn) {
+                if (!isLoggedIn) {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Main.route) { saveState = true }
                     }
                 }
-            )
+            }
+
+            if (isLoggedIn) {
+                CreatePostScreen(
+                    navController = navController,
+                    onPostCreated = {
+                        // 发布成功后返回到 Feed 页
+                        navController.navigate(Screen.Main.route) {
+                            popUpTo(Screen.Main.route) { inclusive = false }
+                        }
+                    }
+                )
+            } else {
+                // 显示加载状态
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
         }
 
         // ================== 二级页面 ==================

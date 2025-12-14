@@ -63,10 +63,14 @@ import androidx.compose.ui.unit.sp
 import com.flowshare.R
 import com.flowshare.data.AuthManager
 import kotlinx.coroutines.launch
+import com.flowshare.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
+    authViewModel: AuthViewModel, // 新增参数
     onRegisterSuccess: () -> Unit,
     onLoginClick: () -> Unit,
     onBackClick: () -> Unit
@@ -74,6 +78,11 @@ fun RegisterScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusRequester = remember { FocusRequester() }
+    // 监听 ViewModel 的状态
+    val isLoading by authViewModel.isLoading.collectAsState()
+    val errorMessage by authViewModel.errorMessage.collectAsState()
+
     // 添加系统返回键处理
     BackHandler {
         onBackClick()
@@ -87,17 +96,12 @@ fun RegisterScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // 焦点管理
-    val focusRequester = remember { FocusRequester() }
 
     // 监听错误消息
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-            errorMessage = null
+            authViewModel.clearError()
         }
     }
 
@@ -124,7 +128,7 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())  // 添加滚动
+                .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
                 .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -294,46 +298,39 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 注册按钮
+            // 注册按钮（修改 onClick 逻辑）
             Button(
                 onClick = {
                     if (username.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                        errorMessage = "请填写所有必填字段"
+                        scope.launch {
+                            snackbarHostState.showSnackbar("请填写所有必填字段")
+                        }
                         return@Button
                     }
 
                     if (password != confirmPassword) {
-                        errorMessage = "两次输入的密码不一致"
+                        scope.launch {
+                            snackbarHostState.showSnackbar("两次输入的密码不一致")
+                        }
                         return@Button
                     }
 
                     if (password.length < 6) {
-                        errorMessage = "密码长度不能少于6位"
+                        scope.launch {
+                            snackbarHostState.showSnackbar("密码长度不能少于6位")
+                        }
                         return@Button
                     }
 
-                    isLoading = true
                     scope.launch {
-                        try {
-                            // 使用模拟注册
-                            val authManager = AuthManager()
-                            val result = authManager.register(
-                                username = username,
-                                displayName = if (displayName.isEmpty()) username else displayName,
-                                password = password
-                            )
+                        val success = authViewModel.register(
+                            username = username,
+                            displayName = if (displayName.isEmpty()) username else displayName,
+                            password = password
+                        )
 
-                            if (result.isSuccess) {
-                                // 模拟网络延迟
-                                kotlinx.coroutines.delay(1500)
-                                onRegisterSuccess()
-                            } else {
-                                errorMessage = result.exceptionOrNull()?.message ?: "注册失败"
-                            }
-                        } catch (e: Exception) {
-                            errorMessage = "注册失败：${e.message}"
-                        } finally {
-                            isLoading = false
+                        if (success) {
+                            onRegisterSuccess()
                         }
                     }
                 },

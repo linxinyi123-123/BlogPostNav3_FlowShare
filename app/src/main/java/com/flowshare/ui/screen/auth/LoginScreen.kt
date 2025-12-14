@@ -60,10 +60,14 @@ import androidx.compose.ui.unit.sp
 import com.flowshare.R
 import com.flowshare.data.AuthManager
 import kotlinx.coroutines.launch
+import com.flowshare.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
+    authViewModel: AuthViewModel, // 新增参数
     onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
     onBackClick: () -> Unit
@@ -71,6 +75,11 @@ fun LoginScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusRequester = remember { FocusRequester() }
+    // 监听 ViewModel 的状态
+    val isLoading by authViewModel.isLoading.collectAsState()
+    val errorMessage by authViewModel.errorMessage.collectAsState()
+
     // 添加系统返回键处理
     BackHandler {
         onBackClick()
@@ -80,17 +89,12 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // 焦点管理
-    val focusRequester = remember { FocusRequester() }
 
     // 监听错误消息
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-            errorMessage = null
+            authViewModel.clearError()
         }
     }
 
@@ -227,29 +231,20 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 登录按钮
+            // 登录按钮（修改 onClick 逻辑）
             Button(
                 onClick = {
                     if (email.isEmpty() || password.isEmpty()) {
-                        errorMessage = "请输入邮箱/用户名和密码"
+                        scope.launch {
+                            snackbarHostState.showSnackbar("请输入邮箱/用户名和密码")
+                        }
                         return@Button
                     }
 
-                    isLoading = true
                     scope.launch {
-                        try {
-                            // 使用模拟登录
-                            val authManager = AuthManager()
-                            authManager.loginWithUserId("current_user") // 模拟登录
-
-                            // 模拟网络延迟
-                            kotlinx.coroutines.delay(1000)
-
+                        val success = authViewModel.login(email, password)
+                        if (success) {
                             onLoginSuccess()
-                        } catch (e: Exception) {
-                            errorMessage = "登录失败：${e.message}"
-                        } finally {
-                            isLoading = false
                         }
                     }
                 },

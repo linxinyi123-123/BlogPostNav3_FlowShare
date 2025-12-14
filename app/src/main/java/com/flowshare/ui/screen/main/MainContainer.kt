@@ -42,7 +42,9 @@ import com.flowshare.ui.screen.feed.FeedScreen
 import com.flowshare.ui.screen.messages.MessagesScreen
 import com.flowshare.ui.screen.search.SearchScreen
 import com.flowshare.ui.theme.FlowShareTheme
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.flowshare.viewmodel.AuthViewModel
+import androidx.compose.runtime.collectAsState
 /**
  * 主容器组件 - 包含底部导航和五个标签页
  * 使用多返回栈保持每个标签页的状态
@@ -50,10 +52,9 @@ import com.flowshare.ui.theme.FlowShareTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainContainer(
-    navController: NavHostController
+    navController: NavHostController,
+    authViewModel: AuthViewModel // 新增参数
 ) {
-    val authManager = remember { AuthManager() }
-
     // 底部导航标签列表
     val tabs = Screen.getBottomNavigationItems()
 
@@ -62,7 +63,7 @@ fun MainContainer(
 
     // 处理发布按钮点击
     val onCreatePostClick: () -> Unit = {
-        if (authManager.isLoggedIn) {
+        if (authViewModel.isLoggedIn.value) {
             // 已登录，导航到发布页面
             navController.navigate(Screen.CreatePost.route)
         } else {
@@ -80,7 +81,7 @@ fun MainContainer(
                 innerNavController = innerNavController,
                 mainNavController = navController,
                 tabs = tabs,
-                authManager = authManager,
+                authViewModel = authViewModel, // 传递 ViewModel
                 onCreatePostClick = onCreatePostClick
             )
         }
@@ -112,7 +113,7 @@ fun MainContainer(
                 // 显示加载状态，然后跳转到主导航的发布页面
                 LaunchedEffect(Unit) {
                     // 检查登录状态
-                    if (authManager.isLoggedIn) {
+                    if (authViewModel.isLoggedIn.value) {
                         navController.navigate(Screen.CreatePost.route)
                     } else {
                         navController.navigate(Screen.Login.route) {
@@ -158,12 +159,15 @@ fun BottomNavigationBar(
     innerNavController: NavHostController,
     mainNavController: NavHostController,
     tabs: List<Screen>,
-    authManager: AuthManager,
+    authViewModel: AuthViewModel, // 新增参数
     onCreatePostClick: () -> Unit
 ) {
     // 获取当前导航堆栈状态
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    // 获取登录状态
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
     NavigationBar {
         tabs.forEach { screen ->
@@ -175,7 +179,7 @@ fun BottomNavigationBar(
                 onClick = {
                     if (screen == Screen.CreatePost) {
                         // 发布按钮：检查登录状态
-                        if (authManager.isLoggedIn) {
+                        if (isLoggedIn) {
                             // 已登录，导航到发布页面（在主导航中）
                             mainNavController.navigate(Screen.CreatePost.route)
                         } else {
@@ -226,20 +230,6 @@ fun BottomNavigationBar(
                     Text(screen.title)
                 }
             )
-        }
-    }
-}
-
-// 预览组件
-@Preview(showBackground = true)
-@Composable
-fun MainContainerPreview() {
-    FlowShareTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            MainContainer(navController = rememberNavController())
         }
     }
 }
