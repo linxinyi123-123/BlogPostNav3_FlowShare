@@ -22,8 +22,31 @@
             android:theme="@style/Theme.FlowShare">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- 添加深链接支持 -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- 处理 https://flowshare.app/post/ 链接 -->
+                <data
+                    android:host="flowshare.app"
+                    android:pathPrefix="/post/"
+                    android:scheme="https" />
+
+                <!-- 处理 http://flowshare.app/post/ 链接 -->
+                <data
+                    android:host="flowshare.app"
+                    android:pathPrefix="/post/"
+                    android:scheme="http" />
+
+                <!-- 处理自定义 scheme: flowshare://post/ 链接 -->
+                <data
+                    android:host="post"
+                    android:scheme="flowshare" />
             </intent-filter>
         </activity>
     </application>

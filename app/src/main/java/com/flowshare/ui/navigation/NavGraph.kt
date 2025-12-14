@@ -26,7 +26,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import com.flowshare.ui.screen.settings.SettingsScreen
+import androidx.navigation.navDeepLink
+import com.flowshare.ui.screen.deeplink.DeepLinkTestScreen
 
 /**
  * 应用的主导航图
@@ -35,7 +38,7 @@ import com.flowshare.ui.screen.settings.SettingsScreen
 @Composable
 fun FlowShareNavHost(
     navController: NavHostController,
-    authViewModel: AuthViewModel, // 新增参数
+    authViewModel: AuthViewModel,
     modifier: Modifier = Modifier,
     startDestination: String = Screen.Welcome.route
 ) {
@@ -55,6 +58,13 @@ fun FlowShareNavHost(
                 popUpTo(0) { inclusive = true }
             }
         }
+    }
+
+    // 处理应用内的深链接
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        // 这里可以处理应用内的通知或消息触发的深链接
+        // 目前为空，未来可以扩展
     }
 
     NavHost(
@@ -226,32 +236,12 @@ fun FlowShareNavHost(
                     type = androidx.navigation.NavType.StringType
                 }
             ),
-            enterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(300)
-                )
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(300)
-                )
-            }
-        ) { backStackEntry ->
-            val postId = backStackEntry.arguments?.getString("postId") ?: ""
-            // ✅ Day 5：使用真正的动态详情页
-            PostDetailScreen(
-                postId = postId,
-                navController = navController
-            )
-        }
-
-        composable(
-            route = Screen.UserProfile.route,
-            arguments = listOf(
-                navArgument("userId") {
-                    type = androidx.navigation.NavType.StringType
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = "https://flowshare.app/post/{postId}"
+                },
+                navDeepLink {
+                    uriPattern = "flowshare://post/{postId}"
                 }
             ),
             enterTransition = {
@@ -267,10 +257,10 @@ fun FlowShareNavHost(
                 )
             }
         ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getString("userId") ?: ""
-            ProfileScreen(
-                navController = navController,
-                userId = userId
+            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+            PostDetailScreen(
+                postId = postId,
+                navController = navController
             )
         }
 
@@ -315,6 +305,18 @@ fun FlowShareNavHost(
                 navController = navController,
                 userId = "current_user"
             )
+        }
+        // 在 NavHost 的最后一个 composable 之后添加
+        composable(
+            route = "deeplink_test",
+            enterTransition = {
+                fadeIn(animationSpec = tween(300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300))
+            }
+        ) {
+            DeepLinkTestScreen(navController = navController)
         }
     }
 }
