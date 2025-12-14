@@ -4,7 +4,7 @@ import com.flowshare.data.model.Conversation
 import com.flowshare.data.model.Message
 import com.flowshare.data.model.Post
 import com.flowshare.data.model.User
-
+import com.flowshare.data.model.Comment
 /**
  * 模拟数据仓库
  * 提供静态的模拟数据，用于开发和测试
@@ -121,6 +121,105 @@ object MockRepository {
             user = getUser("user_003")
         )
     )
+    // ================== 评论数据 ==================
+    private val mockComments = listOf(
+        Comment(
+            id = "comment_001",
+            postId = "post_001",
+            authorId = "user_002",
+            content = "这个设计很棒！可以分享更多细节吗？",
+            likes = 12,
+            timestamp = System.currentTimeMillis() - 2 * 60 * 60 * 1000,
+            replies = listOf(
+                Comment(
+                    id = "reply_001",
+                    postId = "post_001",
+                    authorId = "user_001",
+                    content = "当然！我用了Figma进行设计，可以私信交流。",
+                    likes = 3,
+                    timestamp = System.currentTimeMillis() - 1 * 60 * 60 * 1000
+                )
+            )
+        ),
+        Comment(
+            id = "comment_002",
+            postId = "post_001",
+            authorId = "user_003",
+            content = "感谢分享！我也在学Jetpack Compose，很有帮助。",
+            likes = 8,
+            timestamp = System.currentTimeMillis() - 3 * 60 * 60 * 1000
+        ),
+        Comment(
+            id = "comment_003",
+            postId = "post_001",
+            authorId = "current_user",
+            content = "学到新东西了！收藏起来。",
+            likes = 5,
+            timestamp = System.currentTimeMillis() - 4 * 60 * 60 * 1000
+        ),
+        Comment(
+            id = "comment_004",
+            postId = "post_002",
+            authorId = "user_001",
+            content = "恭喜发布！用户反馈怎么样？",
+            likes = 4,
+            timestamp = System.currentTimeMillis() - 1 * 24 * 60 * 60 * 1000
+        ),
+        Comment(
+            id = "comment_005",
+            postId = "post_003",
+            authorId = "user_002",
+            content = "Compose的Navigation确实好用，解决了Fragment的很多问题。",
+            likes = 15,
+            timestamp = System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000
+        )
+    )
+
+    // ================== 评论相关方法 ==================
+
+    /**
+     * 根据动态ID获取评论列表
+     */
+    fun getCommentsByPostId(postId: String): List<Comment> {
+        return mockComments.filter { it.postId == postId }
+            .sortedByDescending { it.timestamp }
+    }
+
+    /**
+     * 添加评论
+     */
+    fun addComment(postId: String, authorId: String, content: String): Comment {
+        val newComment = Comment(
+            id = "comment_${System.currentTimeMillis()}",
+            postId = postId,
+            authorId = authorId,
+            content = content,
+            likes = 0,
+            timestamp = System.currentTimeMillis()
+        )
+
+        // 在实际应用中，这里会将评论保存到数据库
+        // 这里我们只是添加到模拟列表（注意：由于是val，实际不会修改）
+        return newComment
+    }
+
+    /**
+     * 点赞评论
+     */
+    fun likeComment(commentId: String, userId: String): Comment? {
+        val comment = mockComments.find { it.id == commentId }
+        // 在实际应用中，这里会更新数据库
+        return comment?.copy(likes = comment.likes + 1)
+    }
+
+    /**
+     * 取消点赞评论
+     */
+    fun unlikeComment(commentId: String, userId: String): Comment? {
+        val comment = mockComments.find { it.id == commentId }
+        // 在实际应用中，这里会更新数据库
+        return comment?.copy(likes = maxOf(0, comment.likes - 1))
+    }
 
     // ================== 同步函数（用于Composable） ==================
 

@@ -273,7 +273,7 @@ fun PostCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "评论",
+                            text = "${post.comments}",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )

@@ -52,7 +52,30 @@ import coil.request.ImageRequest
 import com.flowshare.data.model.Post
 import com.flowshare.data.repository.MockRepository
 import com.flowshare.ui.navigation.Screen
-
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.text.input.ImeAction
+import com.flowshare.ui.component.CommentItem
+import com.flowshare.data.model.Comment
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
@@ -63,9 +86,15 @@ fun PostDetailScreen(
     val post = MockRepository.getFeedPosts().find { it.id == postId }
     val author = post?.let { MockRepository.getUser(it.authorId) }
 
+    // 获取该帖子的评论
+    val comments = MockRepository.getCommentsByPostId(postId)
+
     // 帖子状态（点赞数、是否点赞）
     var likes by remember { mutableStateOf(post?.likes ?: 0) }
     var isLiked by remember { mutableStateOf(false) }
+
+    // 新评论内容
+    var newComment by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -325,30 +354,142 @@ fun PostDetailScreen(
 
             // 评论区标题
             item {
-                Text(
-                    text = "评论",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
-                )
-            }
-
-            // 评论列表（占位）
-            item {
-                Box(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
-                        .padding(horizontal = 16.dp),
-                    contentAlignment = Alignment.Center
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "评论区\nDay 8 实现",
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        text = "评论 ${comments.size}",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
+                }
+            }
+
+            // 评论列表
+            if (comments.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(150.dp)
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ChatBubbleOutline,
+                            contentDescription = "暂无评论",
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "还没有评论\n快来抢沙发吧！",
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            } else {
+                items(comments) { comment ->
+                    CommentItem(
+                        comment = comment,
+                        navController = navController,
+                        onLikeClick = {
+                            // 处理点赞评论
+                            val updatedComment = MockRepository.likeComment(comment.id, "current_user")
+                            // 在实际应用中，这里会更新UI状态
+                        }
+                    )
+                }
+            }
+
+            // 发表评论区域
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                    )
+
+                    Text(
+                        text = "发表评论",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // 评论输入框
+                        OutlinedTextField(
+                            value = newComment,
+                            onValueChange = { newComment = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { Text("写下你的评论...") },
+                            singleLine = false,
+                            maxLines = 3,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // 发送按钮
+                        IconButton(
+                            onClick = {
+                                if (newComment.isNotBlank()) {
+                                    // 添加新评论
+                                    val comment = MockRepository.addComment(
+                                        postId = postId,
+                                        authorId = "current_user",
+                                        content = newComment
+                                    )
+                                    newComment = ""
+
+                                    // 在实际应用中，这里会更新评论列表
+                                    // 由于我们使用模拟数据，需要刷新页面或使用状态管理
+                                }
+                            },
+                            enabled = newComment.isNotBlank(),
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    if (newComment.isNotBlank()) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.surfaceVariant,
+                                    CircleShape
+                                )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "发送",
+                                tint = if (newComment.isNotBlank()) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                            )
+                        }
+                    }
+
+                    // 提示：需要登录才能评论
+                    if (true) { // 在实际应用中，这里应该检查登录状态
+                        Text(
+                            text = "提示：需要登录后才能发表评论",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
                 }
             }
 
@@ -357,17 +498,5 @@ fun PostDetailScreen(
                 Spacer(modifier = Modifier.height(80.dp))
             }
         }
-    }
-}
-
-// 预览组件
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-fun PostDetailScreenPreview() {
-    MaterialTheme {
-        PostDetailScreen(
-            postId = "post_001",
-            navController = NavController(LocalContext.current)
-        )
     }
 }
