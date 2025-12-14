@@ -16,6 +16,7 @@ import com.flowshare.ui.screen.auth.WelcomeScreen
 import com.flowshare.ui.screen.main.MainContainer
 import com.flowshare.ui.screen.post.PostDetailScreen
 import com.flowshare.ui.screen.profile.ProfileScreen
+import com.flowshare.ui.screen.createpost.CreatePostScreen
 
 /**
  * 应用的主导航图
@@ -139,6 +140,33 @@ fun FlowShareNavHost(
             }
         ) {
             MainContainer(navController = navController)
+        }
+
+        // ================== 发布页面 ==================
+        composable(
+            route = Screen.CreatePost.route,
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(300)
+                )
+            }
+        ) {
+            CreatePostScreen(
+                navController = navController,
+                onPostCreated = {
+                    // 发布成功后返回到 Feed 页
+                    navController.navigate(Screen.Main.route) {
+                        popUpTo(Screen.Main.route) { inclusive = false }
+                    }
+                }
+            )
         }
 
         // ================== 二级页面 ==================

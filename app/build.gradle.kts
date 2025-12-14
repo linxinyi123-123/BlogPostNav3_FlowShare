@@ -60,6 +60,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     // ViewModel Compose - 状态管理
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation(libs.androidx.compose.runtime)
 
 
 
