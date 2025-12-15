@@ -35,6 +35,7 @@ import androidx.navigation.navDeepLink
 import com.flowshare.ui.screen.deeplink.DeepLinkTestScreen
 import com.flowshare.ui.screen.fullscreen.FullScreenImageScreen
 import androidx.navigation.NavType
+import com.flowshare.ui.screen.chat.ChatScreen
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import com.flowshare.ui.screen.fullscreen.FullScreenImageScreen
@@ -267,6 +268,34 @@ fun FlowShareNavHost(
             val postId = backStackEntry.arguments?.getString("postId") ?: ""
             PostDetailScreen(
                 postId = postId,
+                navController = navController
+            )
+        }
+
+        // ================== 聊天页面 ==================
+        composable(
+            route = Screen.Chat.route,
+            arguments = listOf(
+                navArgument("userId") {
+                    type = NavType.StringType
+                }
+            ),
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            }
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            ChatScreen(
+                userId = userId,
                 navController = navController
             )
         }
