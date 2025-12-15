@@ -1,9 +1,12 @@
 package com.flowshare.ui.navigation
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,7 +33,11 @@ import androidx.compose.ui.platform.LocalContext
 import com.flowshare.ui.screen.settings.SettingsScreen
 import androidx.navigation.navDeepLink
 import com.flowshare.ui.screen.deeplink.DeepLinkTestScreen
-
+import com.flowshare.ui.screen.fullscreen.FullScreenImageScreen
+import androidx.navigation.NavType
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import com.flowshare.ui.screen.fullscreen.FullScreenImageScreen
 /**
  * 应用的主导航图
  * 包含所有可导航的目的地
@@ -317,6 +324,31 @@ fun FlowShareNavHost(
             }
         ) {
             DeepLinkTestScreen(navController = navController)
+        }
+        // ================== 全屏图片浏览 ==================
+        composable(
+            route = Screen.FullScreenImage.route,
+            arguments = listOf(
+                navArgument("imageUrl") {
+                    type = NavType.StringType
+                }
+            ),
+            enterTransition = {
+                fadeIn(animationSpec = tween(300)) +
+                        expandVertically(animationSpec = tween(300))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(300)) +
+                        shrinkVertically(animationSpec = tween(300))
+            }
+        ) { backStackEntry ->
+            val imageUrl = backStackEntry.arguments?.getString("imageUrl") ?: ""
+            // 需要解码URL
+            val decodedImageUrl = Uri.decode(imageUrl)
+            FullScreenImageScreen(
+                imageUrl = decodedImageUrl,
+                navController = navController
+            )
         }
     }
 }

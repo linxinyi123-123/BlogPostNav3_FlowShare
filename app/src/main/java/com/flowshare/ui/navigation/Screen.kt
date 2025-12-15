@@ -1,5 +1,6 @@
 package com.flowshare.ui.navigation
 
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -106,17 +107,17 @@ sealed class Screen(
         title = "设置"
     )
 
-    object FullScreenImage : Screen(
-        route = "image/{imageUrl}",
-        title = "图片浏览"
-    ) {
-        fun createRoute(imageUrl: String) = "image/$imageUrl"
-    }
-
     object Notifications : Screen(
         route = "notifications",
         title = "通知"
     )
+
+    object FullScreenImage : Screen(
+        route = "fullscreen_image/{imageUrl}",
+        title = "全屏图片"
+    ) {
+        fun createRoute(imageUrl: String) = "fullscreen_image/${Uri.encode(imageUrl)}"
+    }
 
     // ================== 实用函数 ==================
     companion object {

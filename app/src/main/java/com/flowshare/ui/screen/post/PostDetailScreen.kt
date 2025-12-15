@@ -1,5 +1,6 @@
 package com.flowshare.ui.screen.post
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -203,20 +204,29 @@ fun PostDetailScreen(
                         // 图片展示（如果有）
                         post?.imageUrls?.takeIf { it.isNotEmpty() }?.forEach { imageUrl ->
                             Spacer(modifier = Modifier.height(12.dp))
-                            Image(
-                                painter = rememberAsyncImagePainter(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(imageUrl)
-                                        .crossfade(true)
-                                        .build()
-                                ),
-                                contentDescription = "动态图片",
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(250.dp)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
-                            )
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        // 导航到全屏图片页面
+                                        val encodedUrl = Uri.encode(imageUrl)
+                                        navController.navigate(Screen.FullScreenImage.createRoute(encodedUrl))
+                                    }
+                            ) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(imageUrl)
+                                            .crossfade(true)
+                                            .build()
+                                    ),
+                                    contentDescription = "动态图片",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
